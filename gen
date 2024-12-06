@@ -1,0 +1,48 @@
+#!/usr/bin/env python
+
+import sys
+import argparse
+import datetime
+import requests
+from os.path import basename
+from bs4 import BeautifulSoup
+import matplotlib.pyplot as plt
+from wordcloud import WordCloud, STOPWORDS
+
+parser = argparse.ArgumentParser(prog=basename(sys.argv[0]), description="generate a word cloud")
+parser.add_argument("-i", "--ignore", help="ignore these csv of tokens")
+parser.add_argument("url", help="url for which to generate a word cloud")
+
+args = parser.parse_args()
+
+def log(msg):
+    print(datetime.datetime.now().isoformat(), msg)
+
+log("fetching page")
+resp = requests.get(args.url)
+if resp.status_code != 200:
+    print(resp.status_code, resp.body)
+    sys.exit(1)
+
+log("extracting text")
+soup = BeautifulSoup(resp.content, "html.parser")
+blacklist = ["[document]", "noscript", "header", "html", "meta", "head", "input", "script", "style"]
+
+normalized = "" 
+for t in soup.find_all(string=True):
+    if t.parent.name not in blacklist:
+        normalized += f"{t} "
+
+log("generating cloud")
+sw = set(STOPWORDS)
+sw.update(args.ignore.split(","))
+wc = WordCloud(width=800, height=800, background_color="white", stopwords=sw, min_font_size=10)
+wc.generate(normalized)
+
+log("creating image")
+plt.figure(figsize=(8, 8), facecolor=None)
+plt.imshow(wc)
+plt.axis("off")
+plt.tight_layout(pad=0)
+
+plt.show()
