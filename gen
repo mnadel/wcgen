@@ -26,17 +26,23 @@ if resp.status_code != 200:
 
 log("extracting text")
 soup = BeautifulSoup(resp.content, "html.parser")
-blacklist = ["[document]", "noscript", "header", "html", "meta", "head", "input", "script", "style"]
+ignored_words = ["[document]", "noscript", "header", "html", "meta", "head", "input", "script", "style"]
 
 normalized = "" 
 for t in soup.find_all(string=True):
-    if t.parent.name not in blacklist:
+    if t.parent.name not in ignored_words:
         normalized += f"{t} "
 
+normalized = normalized.lower()
+
+if args.ignore:
+    for i in args.ignore.split(","):
+        # include leading/trailing space to remove only entire words
+        normalized = normalized.replace(f"{i.lower()} ", "")
+        normalized = normalized.replace(f" {i.lower()}", "")
+
 log("generating cloud")
-sw = set(STOPWORDS)
-sw.update(args.ignore.split(","))
-wc = WordCloud(width=800, height=800, background_color="white", stopwords=sw, min_font_size=10)
+wc = WordCloud(width=800, height=800, background_color="white", stopwords=set(STOPWORDS), min_font_size=10)
 wc.generate(normalized)
 
 log("creating image")
