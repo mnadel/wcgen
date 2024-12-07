@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 from wordcloud import WordCloud
 
 parser = argparse.ArgumentParser(prog=basename(sys.argv[0]), description="generate a word cloud")
+parser.add_argument("-m", "--min", type=int, help="min word size")
 parser.add_argument("-i", "--ignore", default="", help="ignore these csv of tokens")
 parser.add_argument("url", help="url for which to generate a word cloud")
 
@@ -39,6 +40,10 @@ if args.ignore:
     for word in args.ignore.split(","):
         normalized = normalized.replace(f"{word.lower()} ", "")
         normalized = normalized.replace(f" {word.lower()}", "")
+
+if args.min:
+    words = [x for x in normalized.split(" ") if len(x) >= args.min]
+    normalized = " ".join(words)
 
 log("generating cloud")
 wc = WordCloud(width=1024, height=800, background_color="white", min_font_size=10)
