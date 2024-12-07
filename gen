@@ -2,12 +2,12 @@
 
 import sys
 import argparse
-import datetime
 import requests
 from os.path import basename
+from datetime import datetime
 from bs4 import BeautifulSoup
 import matplotlib.pyplot as plt
-from wordcloud import WordCloud, STOPWORDS
+from wordcloud import WordCloud
 
 parser = argparse.ArgumentParser(prog=basename(sys.argv[0]), description="generate a word cloud")
 parser.add_argument("-i", "--ignore", default="", help="ignore these csv of tokens")
@@ -16,7 +16,7 @@ parser.add_argument("url", help="url for which to generate a word cloud")
 args = parser.parse_args()
 
 def log(msg):
-    print(datetime.datetime.now().isoformat(), msg)
+    print(datetime.now().strftime("%F %T.%f")[:-3], msg)
 
 log("fetching page")
 resp = requests.get(args.url)
@@ -26,11 +26,11 @@ if resp.status_code != 200:
 
 log("extracting text")
 soup = BeautifulSoup(resp.content, "html.parser")
-ignored_words = ["[document]", "noscript", "header", "html", "meta", "head", "input", "script", "style"]
+ignored_elements = ["[document]", "noscript", "header", "html", "meta", "head", "input", "script", "style"]
 
 normalized = "" 
 for t in soup.find_all(string=True):
-    if t.parent.name not in ignored_words:
+    if t.parent.name not in ignored_elements:
         normalized += f"{t} "
 
 normalized = normalized.lower()
@@ -42,11 +42,11 @@ if args.ignore:
         normalized = normalized.replace(f" {i.lower()}", "")
 
 log("generating cloud")
-wc = WordCloud(width=800, height=800, background_color="white", stopwords=set(STOPWORDS), min_font_size=10)
+wc = WordCloud(width=1024, height=800, background_color="white", min_font_size=10)
 wc.generate(normalized)
 
 log("creating image")
-plt.figure(figsize=(8, 8), facecolor=None)
+plt.figure(figsize=(10, 8), facecolor=None)
 plt.imshow(wc)
 plt.axis("off")
 plt.tight_layout(pad=0)
