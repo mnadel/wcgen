@@ -26,7 +26,7 @@ if resp.status_code != 200:
 
 log("extracting text")
 soup = BeautifulSoup(resp.content, "html.parser")
-ignored_elements = ["[document]", "noscript", "header", "html", "meta", "head", "input", "script", "style"]
+ignored_elements = {"[document]", "noscript", "header", "html", "meta", "head", "input", "script", "style"}
 
 normalized = "" 
 for t in soup.find_all(string=True):
@@ -36,10 +36,9 @@ for t in soup.find_all(string=True):
 normalized = normalized.lower()
 
 if args.ignore:
-    for i in args.ignore.split(","):
-        # include leading/trailing space to remove only entire words
-        normalized = normalized.replace(f"{i.lower()} ", "")
-        normalized = normalized.replace(f" {i.lower()}", "")
+    for word in args.ignore.split(","):
+        normalized = normalized.replace(f"{word.lower()} ", "")
+        normalized = normalized.replace(f" {word.lower()}", "")
 
 log("generating cloud")
 wc = WordCloud(width=1024, height=800, background_color="white", min_font_size=10)
@@ -51,4 +50,5 @@ plt.imshow(wc)
 plt.axis("off")
 plt.tight_layout(pad=0)
 
+log("showing cloud")
 plt.show()
